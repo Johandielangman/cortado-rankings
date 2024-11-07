@@ -1,3 +1,3 @@
 import streamlit as st
 
-st.write(f"Hello world, and {st.secrets['name']}!")
+st.write(f"Hello worlds!, and {st.secrets['name']}!")
