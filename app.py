@@ -6,10 +6,15 @@ import json
 from datetime import datetime, timedelta
 import extra_streamlit_components as stx
 
-
-def get_cookie_manager():
+def get_manager():
+    """Initialize and return cookie manager"""
     return stx.CookieManager()
 
+# Initialize cookie manager - IMPORTANT: Need to call the component to initialize it
+cookie_manager = get_manager()
+cookie_manager.get_all()  # This line is crucial - it initializes the component in the UI
+
+st.title('Secure User Login App')
 
 def hash_password(password, salt=None):
     """Hash password with SHA-256 and random salt"""
@@ -23,12 +28,10 @@ def hash_password(password, salt=None):
     ).hex()
     return pw_hash, salt
 
-
 def verify_password(password, stored_hash, salt):
     """Verify password against stored hash"""
     pw_hash, _ = hash_password(password, salt)
     return hmac.compare_digest(pw_hash, stored_hash)
-
 
 def create_session_token(username):
     """Create a secure session token with expiry"""
@@ -43,7 +46,6 @@ def create_session_token(username):
         ).hexdigest()
     }
     return json.dumps(session_data)
-
 
 def verify_session(token_str):
     """Verify session token is valid"""
@@ -71,11 +73,6 @@ def verify_session(token_str):
     except:
         return False, None
 
-# Initialize cookie manager
-cookie_manager = get_cookie_manager()
-
-st.title('Secure User Login App')
-
 # Mock user database - in production, use a real database
 USERS = {
     'admin': {
@@ -85,15 +82,16 @@ USERS = {
 }
 
 # Check for existing session
-session_cookie = cookie_manager.cookies.get('streamlit_session', {}).get('session_token')
-if session_cookie:
-    is_valid, username = verify_session(session_cookie)
+session_token = cookie_manager.get('session_token')
+if session_token:
+    is_valid, username = verify_session(session_token)
     if is_valid:
         st.session_state['logged_in'] = True
         st.session_state['username'] = username
     else:
         # Clear invalid cookie
         cookie_manager.delete('session_token')
+        st.session_state['logged_in'] = False
 
 # Login/Logout Logic
 if 'logged_in' not in st.session_state:
@@ -113,12 +111,7 @@ if not st.session_state['logged_in']:
         ):
             # Create and set session token
             session_token = create_session_token(username)
-            cookie_manager.set(
-                'session_token',
-                session_token,
-                expires_at=datetime.now() + timedelta(hours=24),
-                key=st.secrets["SECRET_KEY"]
-            )
+            cookie_manager.set('session_token', session_token)  # Simplified cookie setting
             st.session_state['logged_in'] = True
             st.session_state['username'] = username
             st.rerun()
@@ -131,8 +124,7 @@ else:
     if st.button('Logout'):
         # Clear cookie
         cookie_manager.delete('session_token')
-
-        # Clear session stat
+        # Clear session state
         st.session_state['logged_in'] = False
         st.session_state['username'] = None
         st.rerun()
