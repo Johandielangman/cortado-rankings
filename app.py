@@ -6,15 +6,14 @@ import json
 from datetime import datetime, timedelta
 import extra_streamlit_components as stx
 
-# Create cookie manager with specific configuration
+# Create cookie manager - simpler initialization
 def get_manager():
-    return stx.CookieManager(key="cookies", prefix="my_app.")  # Add key and prefix
+    return stx.CookieManager()
 
 # Initialize cookie manager at the very top
 cookie_manager = get_manager()
 
 # Must be called once at the start of your app
-st.write("≈")  # Invisible character to force component creation
 cookie_manager.get_all()
 
 st.title('Secure User Login App')
@@ -85,7 +84,7 @@ USERS = {
 }
 
 # Check for existing session
-session_token = cookie_manager.get(key='session_token')
+session_token = cookie_manager.get('session_token')
 if session_token:
     is_valid, username = verify_session(session_token)
     if is_valid:
@@ -93,7 +92,7 @@ if session_token:
         st.session_state['username'] = username
     else:
         # Clear invalid cookie
-        cookie_manager.delete(key='session_token')
+        cookie_manager.delete('session_token')
         st.session_state['logged_in'] = False
 
 # Login/Logout Logic
@@ -115,9 +114,11 @@ if not st.session_state['logged_in']:
             # Create and set session token
             session_token = create_session_token(username)
             cookie_manager.set(
-                key='session_token',
-                value=session_token,
-                expires_at=datetime.now() + timedelta(hours=24)
+                'session_token', 
+                session_token,
+                # Explicitly set cookie options
+                expires_at=datetime.now() + timedelta(hours=24),
+                path='/'  # Make cookie available across all paths
             )
             st.session_state['logged_in'] = True
             st.session_state['username'] = username
@@ -130,7 +131,7 @@ else:
 
     if st.button('Logout'):
         # Clear cookie
-        cookie_manager.delete(key='session_token')
+        cookie_manager.delete('session_token')
         # Clear session state
         st.session_state['logged_in'] = False
         st.session_state['username'] = None
