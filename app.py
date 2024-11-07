@@ -1,35 +1,32 @@
 import streamlit as st
-import logging
 
-def get_all_cookies():
-    '''
-    WARNING: This uses unsupported feature of Streamlit
-    Returns the cookies as a dictionary of kv pairs
-    '''
-    from streamlit.web.server.websocket_headers import _get_websocket_headers 
-    from urllib.parse import unquote
+st.title('Amazing User Login App')
 
-    headers = _get_websocket_headers()
-    if headers is None:
-        return {}
-    
-    if 'Cookie' not in headers:
-        return {}
-    
-    cookie_string = headers['Cookie']
-    # A sample cookie string: "K1=V1; K2=V2; K3=V3"
-    cookie_kv_pairs = cookie_string.split(';')
+# Create user_state
+if 'user_state' not in st.session_state:
+    st.session_state.user_state = {
+        'username': '',
+        'password': '',
+        'logged_in': False
+    }
 
-    cookie_dict = {}
-    for kv in cookie_kv_pairs:
-        k_and_v = kv.split('=')
-        k = k_and_v[0].strip()
-        v = k_and_v[1].strip()
-        cookie_dict[k] = unquote(v) #e.g. Convert name%40company.com to name@company.com
-    return cookie_dict
+if not st.session_state.user_state['logged_in']:
+    # Create login form
+    st.write('Please login')
+    username = st.text_input('Username')
+    password = st.text_input('Password', type='password')
+    submit = st.button('Login')
 
-
-st.write(f"Hello worlds!, and {st.secrets['name']}!")
-logging.info("This is a logging test")
-st.info(f"{get_all_cookies()}")
-st.info(f"Hi, {st.experimental_user.email}")
+    # Check if user is logged in
+    if submit and st.session_state.user_state['logged_in'] == False:
+        if username == 'admin' and password == '1234':
+            st.session_state.user_state['username'] = username
+            st.session_state.user_state['password'] = password
+            st.session_state.user_state['logged_in'] = True
+            st.write('You are logged in')
+            st.rerun()
+        else:
+            st.write('Invalid username or password')
+elif st.session_state.user_state['logged_in']:
+    st.write('Welcome to the app')
+    st.write('You are logged in as:', st.session_state.user_state['username'])
