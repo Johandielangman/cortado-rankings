@@ -6,13 +6,16 @@ import json
 from datetime import datetime, timedelta
 import extra_streamlit_components as stx
 
+# Create cookie manager with specific configuration
 def get_manager():
-    """Initialize and return cookie manager"""
-    return stx.CookieManager()
+    return stx.CookieManager(key="cookies", prefix="my_app.")  # Add key and prefix
 
-# Initialize cookie manager - IMPORTANT: Need to call the component to initialize it
+# Initialize cookie manager at the very top
 cookie_manager = get_manager()
-cookie_manager.get_all()  # This line is crucial - it initializes the component in the UI
+
+# Must be called once at the start of your app
+st.write("≈")  # Invisible character to force component creation
+cookie_manager.get_all()
 
 st.title('Secure User Login App')
 
@@ -82,7 +85,7 @@ USERS = {
 }
 
 # Check for existing session
-session_token = cookie_manager.get('session_token')
+session_token = cookie_manager.get(key='session_token')
 if session_token:
     is_valid, username = verify_session(session_token)
     if is_valid:
@@ -90,7 +93,7 @@ if session_token:
         st.session_state['username'] = username
     else:
         # Clear invalid cookie
-        cookie_manager.delete('session_token')
+        cookie_manager.delete(key='session_token')
         st.session_state['logged_in'] = False
 
 # Login/Logout Logic
@@ -111,7 +114,11 @@ if not st.session_state['logged_in']:
         ):
             # Create and set session token
             session_token = create_session_token(username)
-            cookie_manager.set('session_token', session_token)  # Simplified cookie setting
+            cookie_manager.set(
+                key='session_token',
+                value=session_token,
+                expires_at=datetime.now() + timedelta(hours=24)
+            )
             st.session_state['logged_in'] = True
             st.session_state['username'] = username
             st.rerun()
@@ -123,8 +130,11 @@ else:
 
     if st.button('Logout'):
         # Clear cookie
-        cookie_manager.delete('session_token')
+        cookie_manager.delete(key='session_token')
         # Clear session state
         st.session_state['logged_in'] = False
         st.session_state['username'] = None
         st.rerun()
+
+# Debug information (remove in production)
+st.write("Current cookies:", cookie_manager.get_all())
