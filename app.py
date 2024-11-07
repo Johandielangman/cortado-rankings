@@ -31,4 +31,4 @@ def get_all_cookies():
 
 st.write(f"Hello worlds!, and {st.secrets['name']}!")
 logging.info("This is a logging test")
-logging.info(f"{get_all_cookies()}")
+st.info(f"{get_all_cookies()}")
