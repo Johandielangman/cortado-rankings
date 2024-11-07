@@ -292,7 +292,7 @@ serverPort = 8501
 
 # Primary accent color for interactive elements.
 # The value below was set in C:\Users\johan\OneDrive\Documents\Python Scripts\cortado-rankings\.streamlit\config.toml
-primaryColor = "#F63366"
+primaryColor = "#ff2b2b"
 
 # Background color for the main content area.
 # The value below was set in C:\Users\johan\OneDrive\Documents\Python Scripts\cortado-rankings\.streamlit\config.toml
