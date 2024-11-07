@@ -302,7 +302,7 @@ backgroundColor = "black"
 # secondaryBackgroundColor =
 
 # Color used for almost all text.
-textColor =
+# textColor =
 
 # Font family for all text in the app, except code blocks. One of "sans serif",
 # "serif", or "monospace".
