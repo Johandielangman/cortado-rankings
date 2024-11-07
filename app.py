@@ -114,7 +114,7 @@ if not st.session_state['logged_in']:
             # Create and set session token
             session_token = create_session_token(username)
             cookie_manager.set(
-                'session_token', 
+                'session_token',
                 session_token,
                 # Explicitly set cookie options
                 expires_at=datetime.now() + timedelta(hours=24),
@@ -136,6 +136,3 @@ else:
         st.session_state['logged_in'] = False
         st.session_state['username'] = None
         st.rerun()
-
-# Debug information (remove in production)
-st.write("Current cookies:", cookie_manager.get_all())

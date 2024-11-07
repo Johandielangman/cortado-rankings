@@ -185,7 +185,7 @@ baseUrlPath = ""
 # `server.enableXsrfProtection`.
 
 # Default: true
-enableCORS = true
+enableCORS = false
 
 # Enables support for Cross-Site Request Forgery (XSRF) protection, for
 # added security.
