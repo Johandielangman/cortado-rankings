@@ -85,7 +85,7 @@ USERS = {
 }
 
 # Check for existing session
-session_cookie = cookie_manager.cookies.get('session_token')
+session_cookie = cookie_manager.cookies.get('streamlit_session', {}).get('session_token')
 if session_cookie:
     is_valid, username = verify_session(session_cookie)
     if is_valid:
