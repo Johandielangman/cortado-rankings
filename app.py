@@ -1,77 +1,41 @@
 import streamlit as st
-import hmac
-import hashlib
-import time
-
-st.set_page_config(
-    page_title="Cortado Rating",
-    page_icon="☕",
-    layout="centered",
-    menu_items={
-        'Get Help': 'https://www.extremelycoolapp.com/help',
-        'Report a bug': "https://www.extremelycoolapp.com/bug",
-        'About': "# This is a header. This is an *extremely* cool app!"
-    }
-)
-
-st.title('Simple User Login App')
+from constants import Constants
+import os
+from utils.page import PageUtils
 
 
-def hash_password(password, salt=None):
-    """Hash password with SHA-256 and random salt"""
-    if salt is None:
-        salt = hashlib.sha256(str(time.time()).encode()).hexdigest()
-    pw_hash = hashlib.pbkdf2_hmac(
-        'sha256',
-        password.encode(),
-        salt.encode(),
-        100000  # Number of iterations
-    ).hex()
-    return pw_hash, salt
+class App:
+    def __init__(self) -> None:
+        self.c: Constants = Constants()
+        self._setup()
+
+    def _setup(self):
+        st.set_page_config(
+            page_title=self.c.page_setup.page_title,
+            page_icon=self.c.page_setup.page_icon,
+            layout=self.c.page_setup.layout,
+        )
+        pg = st.navigation(
+            [st.Page(**page) for page in self._get_pages()],
+            position="sidebar"
+        )
+        pg.run()
+
+    def _get_pages(self):
+        pages = []
+        for file in os.listdir("pages"):
+            if (
+                file.endswith(".py") and
+                not file.startswith("__")
+            ):
+                pages.append({
+                    "page": PageUtils.page(file),
+                    "title": PageUtils.title(file),
+                    "icon": "☕",
+                    "url_path": PageUtils.url_path(file)
+                })
+        return pages
 
 
-def verify_password(password, stored_hash, salt):
-    """Verify password against stored hash"""
-    pw_hash, _ = hash_password(password, salt)
-    return hmac.compare_digest(pw_hash, stored_hash)
-
-
-# Mock user database - in production, use a real database
-USERS = {
-    'admin': {
-        'password_hash': 'bc903dbbe8aa6f641d85498009a95d5422bd2fd56364c31decd023c19e83811f',  # hashed '1234'
-        'salt': 'default_salt'
-    }
-}
-
-
-# Initialize session state
-if 'logged_in' not in st.session_state:
-    st.session_state['logged_in'] = False
-
-
-if not st.session_state['logged_in']:
-    st.write('Please login')
-    username = st.text_input('Username')
-    password = st.text_input('Password', type='password')
-    submit = st.button('Login')
-
-    if submit:
-        if username in USERS and verify_password(
-            password,
-            USERS[username]['password_hash'],
-            USERS[username]['salt']
-        ):
-            st.session_state['logged_in'] = True
-            st.session_state['username'] = username
-            st.rerun()
-        else:
-            st.error('Invalid username or password')
-
-else:
-    st.write(f'Welcome back, {st.session_state["username"]}!')
-
-    if st.button('Logout'):
-        st.session_state['logged_in'] = False
-        st.session_state['username'] = None
-        st.rerun()
+if __name__ == "__main__":
+    app = App()
