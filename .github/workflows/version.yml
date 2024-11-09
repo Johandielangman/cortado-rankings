@@ -1,0 +1,81 @@
+name: Version bump on push to main
+
+on:
+  push:
+    branches:
+      - main # You can specify your main branch here
+
+jobs:
+  auto-version-bump:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # fetch complete history so we can analyze commits
+
+      # Fetch tags
+      - name: Fetch tags
+        run: git fetch --tags
+
+      # Get latest tag
+      - name: Get latest tag
+        id: latesttag
+        run: echo "LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))" >> $GITHUB_ENV
+
+      # Analyze commits to decide how to bump version
+      - name: Analyze commits for version bump
+        id: analyze_commits
+        run: |
+          latest_tag=$LATEST_TAG
+          echo "Latest tag is $latest_tag"
+
+          # Remove the 'v' prefix from the latest tag to get the pure semver string
+          latest_semver=$(echo $latest_tag | cut -c 2-)
+
+          # Split semver string into major, minor, and patch versions
+          major=$(echo $latest_semver | cut -d. -f1)
+          minor=$(echo $latest_semver | cut -d. -f2)
+          patch=$(echo $latest_semver | cut -d. -f3)
+
+          # Analyze commits to decide how to bump version
+          bump_type="patch"  # default bump type
+
+          for commit in $(git log $latest_tag..HEAD --pretty=format:"%s"); do
+            if [[ "$commit" == *"feat"* ]]; then
+              bump_type="minor"
+              break
+            elif [[ "$commit" == *"fix"* ]]; then
+              bump_type="patch"
+            fi
+          done
+
+          echo "Bump type is $bump_type"
+
+          # Perform version bump
+          if [[ "$bump_type" == "major" ]]; then
+            major=$((major + 1))
+            minor=0
+            patch=0
+          elif [[ "$bump_type" == "minor" ]]; then
+            minor=$((minor + 1))
+            patch=0
+          elif [[ "$bump_type" == "patch" ]]; then
+            patch=$((patch + 1))
+          fi
+
+          # Form new semver string and new tag
+          new_semver="${major}.${minor}.${patch}"
+          new_tag="v${new_semver}"
+
+          echo "NEW_TAG=$new_tag" >> $GITHUB_ENV
+
+      # Push new tag
+      - name: Push new tag
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "jghanekom2@gmail.com"
+          git tag $NEW_TAG
+          git push origin $NEW_TAG
