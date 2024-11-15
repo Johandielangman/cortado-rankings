@@ -1,18 +1,21 @@
-import streamlit as st
+from utils.google_maps import GoogleMapsConverter
 from streamlit_star_rating import st_star_rating
 from utils.mongo import MongoUtils
-from typing import (
-    List,
-    Optional
-)
+import streamlit as st
+import os
+from pages.__login import Login
+from constants import Constants
+from datetime import datetime
+import pytz
 
 
 class Rate:
     def __init__(self) -> None:
-        st.title("How was your Cortado? ☕")
-        self._display_from()
+        Login(callback=self.__display_from)
 
-    def _display_from(self):
+    def __display_from(self):
+        st.title("How was your Cortado? ☕")
+        c = Constants()
         with st.form("rate!"):
             stars = st_star_rating(
                 "Rate the taste",
@@ -21,30 +24,13 @@ class Rate:
                 defaultValue=0,
                 key="rating"
             )
-            shop_name = st.text_input(
-                "Shop name",
+            nickname = st.text_input(
+                "Shop nickname",
                 ""
             )
 
-            province = st.selectbox(
-                "Choose a province",
-                (
-                    "Eastern Cape",
-                    "Free State",
-                    "Gauteng",
-                    "KwaZulu-Natal",
-                    "Limpopo",
-                    "Mpumalanga",
-                    "North West",
-                    "Northern Cape",
-                    "Western Cape",
-                ),
-                index=None,
-                placeholder="Select a province...",
-            )
-
-            lat_long = st.text_input(
-                "Lat Long",
+            google_maps_link = st.text_input(
+                "Google Maps Link",
                 ""
             )
 
@@ -57,6 +43,8 @@ class Rate:
             if submitted:
                 try:
                     with st.spinner('Saving your rating...'):
+                        gmaps_converter = GoogleMapsConverter(c.secrets['google']['api_key'])
+                        gmaps_data = gmaps_converter.process_url(google_maps_link)
                         mu: MongoUtils = MongoUtils(
                             username=str(st.secrets["mongo"]["username"]),
                             password=str(st.secrets["mongo"]["password"]),
@@ -64,25 +52,20 @@ class Rate:
                             database=str(st.secrets["mongo"]["database"]),
                         )
                         mu.db['ratings'].insert_one({
+                            "created_at": datetime.now(pytz.timezone("Africa/Johannesburg")),
                             "stars": stars,
-                            "province": province,
-                            "shop_name": shop_name,
-                            "lat_long": self._lat_long_from_string(lat_long),
-                            "additional_comments": additional_comments
+                            "nickname": nickname,
+                            "name": gmaps_data.get('result', {}).get('name'),
+                            "lat_long": gmaps_data.get('result', {}).get('geometry', {}).get('location'),
+                            "google_maps_link": google_maps_link,
+                            "additional_comments": additional_comments,
+                            "website": gmaps_data.get('result', {}).get('website'),
+                            "address": gmaps_data.get('result', {}).get('formatted_address'),
+                            "username": st.session_state.username,
                         })
                     st.success("Saved! Now get another Cortado ☕")
                 except Exception as e:
                     st.error(f"An error occurred: {e}")
 
-    def _lat_long_from_string(
-        self,
-        lat_long: str
-    ) -> Optional[List[float]]:
-        if "," not in lat_long:
-            return None
-        try:
-            return [float(x) for x in lat_long.split(",")]
-        except ValueError:
-            return None
-
-r: Rate = Rate()
+if not os.path.basename(__file__).startswith("__"):
+    r: Rate = Rate()

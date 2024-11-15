@@ -1,7 +1,8 @@
-import streamlit as st
-from constants import Constants
-import os
 from utils.page import PageUtils
+from pages.__login import Login
+from constants import Constants
+import streamlit as st
+import os
 
 
 class App:
@@ -15,6 +16,11 @@ class App:
             page_icon=self.c.page_setup.page_icon,
             layout=self.c.page_setup.layout,
         )
+        Login(callback=self.__run)
+
+    def __run(self):
+        if "username" in st.session_state:
+            st.sidebar.write(f"Hello, {st.session_state.username}! 👋")
         pg = st.navigation(
             [st.Page(**page) for page in self._get_pages()],
             position="sidebar"

@@ -31,7 +31,11 @@ class Paths:
 class Constants:
     page_setup: PageSetup = PageSetup()
     paths: Paths = Paths()
-    _secrets: Optional[Dict] = field(init=False, repr=False, default=None)
+    login_duration_mins: int = 60
+    _secrets: Optional[Dict] = field(
+        repr=False,
+        default_factory=dict
+    )
 
     def __post_init__(self):
         self._load_secrets()
