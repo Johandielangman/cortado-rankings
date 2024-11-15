@@ -296,7 +296,7 @@ primaryColor = "#ff2b2b"
 
 # Background color for the main content area.
 # The value below was set in C:\Users\johan\OneDrive\Documents\Python Scripts\cortado-rankings\.streamlit\config.toml
-backgroundColor = "black"
+backgroundColor = "white"
 
 # Background color used for the sidebar and most interactive widgets.
 # secondaryBackgroundColor =
