@@ -5,7 +5,7 @@ import os
 from utils.mongo import MongoUtils
 
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=60)
 def get_all_ratings():
     mu: MongoUtils = MongoUtils(
         username=str(st.secrets["mongo"]["username"]),
